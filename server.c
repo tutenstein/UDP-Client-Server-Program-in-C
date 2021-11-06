@@ -7,7 +7,7 @@
 #include <sys/socket.h>
 #include<arpa/inet.h>
 
-#define MAXLINE 1024
+#define MAXLINE 255
 
 
 
@@ -23,11 +23,12 @@ int main(int argc, char *argv[])
         exit(1);}
 
    int sockfd,portno,n;
-   char buffer[MAXLINE];
+   char server_message[255], client_message[255];
    struct sockaddr_in serv_addr,cli_addr;
-   int clilen = sizeof(cli_addr);
+    int client_struct_length = sizeof(cli_addr);
 
-   sockfd = socket(AF_INET,SOCK_DGRAM,0);
+
+   sockfd = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
    if (sockfd<0)
        perror("Socket is not created.");
    printf("Socket is Created.\n");
@@ -43,23 +44,22 @@ int main(int argc, char *argv[])
    printf("binding is done.\n");
 
    while(1){
-          bzero(buffer, 255);
-
-
-          n = recvfrom(sockfd,(char *)buffer,MAXLINE,MSG_WAITALL, ( struct sockaddr *) &cli_addr,&clilen);
+   	      printf("Waiting for data...");
+	      fflush(stdout);
+          bzero(client_message, 255);
+          bzero(server_message, 255);
+   
+          n = recvfrom(sockfd, client_message, sizeof(client_message), 0,(struct sockaddr*)&cli_addr, &client_struct_length);
           if (n<0)
               error("Error on reading");
-          printf("Client: %s\n", buffer);
-          bzero(buffer, 255);
-          fgets(buffer,255,stdin);
+          printf("Received packet from %s:%d\n", inet_ntoa(cli_addr.sin_addr), ntohs(cli_addr.sin_port));
+          printf("Client: %s\n", client_message);
+          fgets(server_message,255,stdin); 
 
-          n = sendto(sockfd,(char *)buffer,sizeof(&buffer),MSG_WAITALL, ( struct sockaddr *) &cli_addr,clilen);
-
-          bzero((char *)&cli_addr, sizeof(cli));
-
+          n = sendto(sockfd, server_message, strlen(server_message), 0,(struct sockaddr*)&cli_addr, client_struct_length);
           if (n<0)
               error("Error on writting");
-          int i = strncmp("exit", buffer, 4);
+          int i = strncmp("exit", server_message, 4);
           if (i==0)
           break;
    }
