@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 
           if (n<0)
               error("Error on writting");
-          int i = strncmp("exit", buffer, 3);
+          int i = strncmp("exit", buffer, 4);
           if (i==0)
           break;
    }
