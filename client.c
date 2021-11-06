@@ -6,7 +6,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
-#define MAXLINE 1024
+#define MAXLINE 255
 
 
 
@@ -25,10 +25,10 @@ int main(int argc, char *argv[])
    }
     int sockfd, portno, n;
     struct sockaddr_in serv_addr;
-    int addr_size = sizeof(serv_addr);
-    char buffer[255];
+    int server_struct_length = sizeof(serv_addr);
+    char server_message[255], client_message[255];
 
-    portno = atoi(argv[2]);
+    portno = atoi(argv[1]);
     sockfd = socket(AF_INET,SOCK_DGRAM,0);
     if (sockfd<0)
         perror("Socket is not created.");
@@ -44,19 +44,20 @@ int main(int argc, char *argv[])
 
     while(1){
 
-          bzero(buffer, 255);
+          bzero(client_message, 255);
+          bzero(server_message, 255);
           printf("Enter the mesage: ");
-          fgets(buffer,255,stdin);
-          n = sendto(sockfd,(char *)buffer,sizeof(&buffer),MSG_WAITALL, ( struct sockaddr *) &serv_addr,addr_size);
+          fgets(client_message,255,stdin); 
+        
+          n = sendto(sockfd, client_message, strlen(client_message), 0,(struct sockaddr*)&serv_addr, server_struct_length);
           if (n<0)
               error("Error on writting");
           printf("Waiting for reply from server...\n ");
-          bzero(buffer, 255);
-          n = recvfrom(sockfd,(char *)buffer, MAXLINE,MSG_WAITALL, ( struct sockaddr *) &serv_addr,&addr_size);
+          n = recvfrom(sockfd, server_message, sizeof(server_message), 0,(struct sockaddr*)&serv_addr, &server_struct_length);
           if (n<0)
              error("Error on reading");
-          printf("Server: %s\n", buffer);
-          int i = strncmp("exit", buffer, 3);
+          printf("Server: %s\n", server_message);
+          int i = strncmp("exit", server_message, 4);
           if (i==0)
               break;
    }
